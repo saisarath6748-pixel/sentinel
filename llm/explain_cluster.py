@@ -1,11 +1,11 @@
 """
 Cluster explanation module.
 
-Wraps llama_client.explain_cluster() with caching and error handling.
+Wraps gpt_client.explain_cluster() with caching and error handling.
 Used by the API route /clusters/{id}/explain.
 """
 
-from llm.llama_client import explain_cluster
+from llm.gpt_client import explain_cluster
 
 # Simple in-memory cache to avoid re-calling the LLM for the same cluster
 _cache: dict[str, str] = {}

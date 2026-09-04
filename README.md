@@ -10,9 +10,15 @@ Built for precision and scale, Sentinel acts as an intelligent watchdog. It iden
 
 ## 🚀 About Sentinel
 
-As fraud techniques evolve into coordinated network attacks, traditional rule-based systems fall short. Sentinel leverages multi-dimensional signal extraction and deterministic clustering to uncover hidden connections between seemingly unrelated accounts. 
+Built for the **Razorpay /buildathon 2026**, **Sentinel** is a dual-engine AI risk management platform designed to secure your business on two critical fronts:
 
-Additionally, Sentinel ships with a bundled **API Key Leak Scanner** to proactively check merchant codebases for exposed Razorpay/API secrets before they go live, addressing both transactional risk and infrastructure security.
+### 1. Real-Time Abuse Ring Detector
+As fraud techniques evolve into coordinated network attacks, traditional rule-based systems fall short. Sentinel leverages multi-dimensional signal extraction and deterministic graph clustering to uncover hidden connections between seemingly unrelated accounts. It proactively identifies and blocks coordinated abuse rings (e.g., promo farming, return fraud) before they can impact your bottom line.
+
+### 2. API Key Leak Scanner
+Security starts at the source. Sentinel ships with a bundled codebase scanner that proactively hunts for exposed Razorpay API secrets before your code goes live. By intercepting leaked credentials, it addresses infrastructure vulnerabilities and prevents unauthorized transactional access, ensuring your merchant integration remains airtight.
+
+> **Important Note for the Buildathon:** The frontend dashboard provided in this repository serves purely as a visual showcase. It is designed to demonstrate the capabilities and outputs of the Sentinel platform in a digestible format for the buildathon. However, the **Abuse Ring Detector** and **API Key Leak Scanner** are fundamentally independent, modular tools. In a real-world production environment, these backend modules are intended to be integrated directly into a merchant's existing infrastructure, risk engines, or CI/CD pipelines as standalone services.
 
 ## 🕵️‍♂️ How it Detects Abuse Rings
 
@@ -29,7 +35,7 @@ Sentinel is built using a modern, decoupled architecture designed for rapid iter
 - **Frontend (Dashboard)**: Next.js (React), Tailwind CSS, and shadcn/ui for a highly responsive, modern risk management interface.
 - **Backend API**: Python (FastAPI/Flask) for high-throughput, low-latency API endpoints serving the dashboard.
 - **Data Pipeline**: Python-based ingestion, normalization, and synthetic data generation scripts.
-- **Detection & AI Engine**: Network graph clustering algorithms coupled with LLM inference (`llama_client.py`) for semantic risk analysis.
+- **Detection & AI Engine**: Network graph clustering algorithms coupled with LLM inference (GPT models) for semantic risk analysis.
 - **Database**: Supabase / PostgreSQL for robust, relational data storage.
 
 ### Directory Structure

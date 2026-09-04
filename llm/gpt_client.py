@@ -1,7 +1,7 @@
 """
 LLM client for cluster explanations.
 
-Calls Llama 3.3 70B via Groq API to turn a flagged cluster's data
+Calls GPT API to turn a flagged cluster's data
 into a plain-English explanation for a merchant's ops team.
 
 This is ON-DEMAND ONLY -- never called during detection or scoring.
@@ -9,7 +9,7 @@ It never decides what gets flagged. It only explains what was already
 flagged by the deterministic detection engine.
 
 Usage (standalone test):
-    python -m llm.llama_client
+    python -m llm.gpt_client
 """
 
 import os
