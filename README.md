@@ -88,9 +88,9 @@ To explore the dashboard, log in with any of the following pre-configured demo m
 
 **Password for all demo accounts:** `password123`
 
-- 🏢 `merchant_alpha@demo.sentinel` — **Alpha Electronics** (Pre-calculated synthetic abuse ring detection across cross-merchant electronics orders)
-- 🏢 `merchant_beta@demo.sentinel` — **Beta Fashion** (Pre-calculated synthetic abuse rings focused on promo & return fraud)
-- 🏢 `merchant_gamma@demo.sentinel` — **Gamma Groceries** (Connected to **Live Razorpay Test Mode Payments** with real-time API syncing & dynamic ring detection)
+- 🏢 `merchant_alpha@demo.sentinel`
+- 🏢 `merchant_beta@demo.sentinel`
+- 🏢 `merchant_gamma@demo.sentinel`
 
 ## ⚡ Quick Setup
 
