@@ -21,6 +21,7 @@ import base64
 import uuid
 import secrets
 import hashlib
+import json
 import pandas as pd
 from datetime import datetime
 
@@ -107,11 +108,115 @@ def _run_detection():
     merged = merge_overlapping_clusters(raw)
     _scored_clusters = score_all_clusters(merged, _accounts_df, orders_df)
 
-    # Attach merchant_id to each cluster by looking up its accounts
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    meta_file = os.path.join(base_dir, "data", "gamma_payment_meta.json")
+    gamma_meta = {}
+    if os.path.exists(meta_file):
+        try:
+            with open(meta_file, "r", encoding="utf-8") as f:
+                gamma_meta = json.load(f)
+        except Exception:
+            gamma_meta = {}
+
+    # Attach merchant_id and rich exact info to each cluster
     for cluster in _scored_clusters:
         acct_ids = cluster["account_ids"]
         merchants = _accounts_df[_accounts_df["account_id"].isin(acct_ids)]["merchant_id"].unique()
         cluster["merchant_id"] = str(merchants[0]) if len(merchants) > 0 else None
+
+        cluster_accts = _accounts_df[_accounts_df["account_id"].isin(acct_ids)]
+        cluster_ords = orders_df[orders_df["account_id"].isin(acct_ids)]
+
+        # Find emails and phones
+        emails = [e for e in cluster_accts["email"].dropna().unique().tolist() if e and e != "unknown@example.com"]
+        phones = [ph for ph in cluster_accts["phone"].dropna().astype(str).unique().tolist() if ph and ph != "0000000000"]
+        total_vol = float(cluster_ords["amount"].sum()) if not cluster_ords.empty else 0.0
+
+        cluster["emails"] = emails
+        cluster["phones"] = phones
+        cluster["total_volume"] = round(total_vol, 2)
+        cluster["currency"] = "INR" if cluster["merchant_id"] == "1ed1d417-6ce7-4b1d-ba96-1a08097b591a" else "USD"
+
+        # Build exact shared signals list
+        exact_signals = []
+        shared_sigs = cluster.get("shared_signals", [])
+
+        # Check if card_hash is shared
+        if "card_hash" in shared_sigs:
+            found_card = None
+            for aid in acct_ids:
+                if aid in gamma_meta and gamma_meta[aid].get("card_label"):
+                    found_card = gamma_meta[aid]["card_label"]
+                    break
+            if not found_card:
+                found_card = "Shared Payment Card"
+            exact_signals.append({
+                "signal": "card_hash",
+                "type": "card",
+                "label": "Shared Card",
+                "value": found_card
+            })
+
+        # Check if address_hash is shared
+        if "address_hash" in shared_sigs:
+            found_addr = None
+            for aid in acct_ids:
+                if aid in gamma_meta and gamma_meta[aid].get("address_label"):
+                    found_addr = gamma_meta[aid]["address_label"]
+                    break
+            if not found_addr:
+                found_addr = "Shared Shipping Address"
+            exact_signals.append({
+                "signal": "address_hash",
+                "type": "address",
+                "label": "Shared Address",
+                "value": found_addr
+            })
+
+        # Check if device_hash is shared
+        if "device_hash" in shared_sigs:
+            exact_signals.append({
+                "signal": "device_hash",
+                "type": "device",
+                "label": "Shared Device",
+                "value": "Shared Device Fingerprint"
+            })
+
+        # If all accounts in the cluster share a phone number, highlight it
+        if len(phones) == 1:
+            exact_signals.append({
+                "signal": "phone",
+                "type": "phone",
+                "label": "Shared Contact",
+                "value": phones[0]
+            })
+
+        cluster["exact_shared_signals"] = exact_signals
+
+        # Build linked accounts detailed list
+        linked_details = []
+        for aid in acct_ids:
+            meta = gamma_meta.get(aid, {})
+            acct_row = cluster_accts[cluster_accts["account_id"] == aid]
+            email = meta.get("email") or (acct_row["email"].iloc[0] if not acct_row.empty else "")
+            phone = meta.get("phone") or (str(acct_row["phone"].iloc[0]) if not acct_row.empty else "")
+            
+            ord_row = cluster_ords[cluster_ords["account_id"] == aid]
+            order_id = meta.get("payment_id") or (ord_row["order_id"].iloc[0] if not ord_row.empty else "")
+            amount = meta.get("amount") if meta.get("amount") is not None else (float(ord_row["amount"].iloc[0]) if not ord_row.empty else 0.0)
+            order_time = meta.get("order_time") or (str(ord_row["order_time"].iloc[0]) if not ord_row.empty else "")
+
+            linked_details.append({
+                "account_id": aid,
+                "email": email,
+                "phone": phone,
+                "card_label": meta.get("card_label") or "Card on file",
+                "order_id": order_id,
+                "amount": amount,
+                "status": meta.get("status") or "captured",
+                "order_time": order_time
+            })
+        cluster["linked_accounts_detail"] = linked_details
 
 
 @app.on_event("startup")
@@ -301,6 +406,8 @@ def explain(cluster_id: str):
 @app.post("/clusters/refresh")
 def refresh():
     """Re-run the detection pipeline (e.g. after new data ingestion)."""
+    from llm.explain_cluster import clear_cache
+    clear_cache()
     _run_detection()
     return {"status": "refreshed", "clusters_loaded": len(_scored_clusters)}
 
@@ -308,6 +415,9 @@ def refresh():
 def _ingest_razorpay(merchant_id: str):
     """Fetch recent test payments from Razorpay and map them into the Sentinel detection schema."""
     from ingestion.razorpay_client import fetch_recent_payments
+    from llm.explain_cluster import clear_cache
+    clear_cache()
+
     payments = fetch_recent_payments()
     if not payments:
         return {"status": "success", "added_accounts": 0, "added_orders": 0, "total_clusters": len(_scored_clusters)}
@@ -315,6 +425,15 @@ def _ingest_razorpay(merchant_id: str):
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     accounts_file = os.path.join(base_dir, "data", "accounts.csv")
     orders_file = os.path.join(base_dir, "data", "orders.csv")
+    meta_file = os.path.join(base_dir, "data", "gamma_payment_meta.json")
+
+    gamma_meta = {}
+    if os.path.exists(meta_file):
+        try:
+            with open(meta_file, "r") as f:
+                gamma_meta = json.load(f)
+        except Exception:
+            gamma_meta = {}
 
     new_accounts = []
     new_orders = []
@@ -322,15 +441,67 @@ def _ingest_razorpay(merchant_id: str):
     for p in payments:
         email = p.get("email") or "unknown@example.com"
         contact = p.get("contact") or "0000000000"
-        card_id = p.get("card_id") or "card_unknown"
 
         # Unique account ID per payment transaction to model multi-account card-testing & abuse rings
         acc_id = f"acct_rzp_{p['payment_id'][-8:]}"
 
-        # Deterministic hashes for simulated signals based on Razorpay data
-        device_hash = hashlib.md5(str(contact).encode()).hexdigest()[:16]
-        address_hash = hashlib.md5((str(contact) + "addr").encode()).hexdigest()[:16]
-        card_hash = hashlib.md5(str(card_id).encode()).hexdigest()[:16]
+        # Real card fingerprinting from Razorpay card object:
+        # In Razorpay, card_id is ephemeral per transaction, but card attributes
+        # (token_iin / BIN, last4, network, issuer) identify the physical card.
+        card_obj = p.get("card") or {}
+        if card_obj and (card_obj.get("last4") or card_obj.get("token_iin") or card_obj.get("network")):
+            bin_num = card_obj.get("token_iin") or card_obj.get("issuer") or ""
+            last4 = card_obj.get("last4") or ""
+            network = card_obj.get("network") or ""
+            card_fingerprint = f"{bin_num}_{last4}_{network}".strip("_")
+            card_hash = hashlib.md5(card_fingerprint.encode()).hexdigest()[:16]
+            issuer_str = f" ({card_obj.get('issuer')})" if card_obj.get('issuer') else ""
+            card_label = f"{network or 'Card'} \u2022\u2022\u2022\u2022 {last4}{issuer_str}".strip()
+        elif p.get("vpa"):
+            card_hash = hashlib.md5(str(p.get("vpa")).encode()).hexdigest()[:16]
+            card_label = f"UPI: {p.get('vpa')}"
+        else:
+            card_hash = f"no_card_{acc_id}"
+            card_label = p.get("method") or "Unknown Method"
+
+        # Address: only hash real address if provided in notes / shipping
+        notes = p.get("notes") or {}
+        if isinstance(notes, dict) and (notes.get("address") or notes.get("shipping_address") or notes.get("billing_address")):
+            addr_str = str(notes.get("address") or notes.get("shipping_address") or notes.get("billing_address")).strip()
+            address_hash = hashlib.md5(addr_str.lower().encode()).hexdigest()[:16]
+            addr_label = addr_str
+        else:
+            # Do NOT fake an address hash across transactions
+            address_hash = f"no_addr_{acc_id}"
+            addr_label = ""
+
+        # Device: check if device fingerprint is in notes, otherwise unique per account
+        if isinstance(notes, dict) and (notes.get("device_id") or notes.get("device_hash")):
+            dev_str = str(notes.get("device_id") or notes.get("device_hash")).strip()
+            device_hash = hashlib.md5(dev_str.encode()).hexdigest()[:16]
+            dev_label = dev_str
+        else:
+            device_hash = f"no_dev_{acc_id}"
+            dev_label = ""
+
+        # Record metadata for this transaction
+        gamma_meta[acc_id] = {
+            "account_id": acc_id,
+            "payment_id": p.get("payment_id"),
+            "amount": p.get("amount"),
+            "email": email,
+            "phone": contact,
+            "method": p.get("method"),
+            "card_label": card_label,
+            "card_network": card_obj.get("network", "") if card_obj else "",
+            "card_last4": card_obj.get("last4", "") if card_obj else "",
+            "card_issuer": card_obj.get("issuer", "") if card_obj else "",
+            "card_type": card_obj.get("type", "") if card_obj else "",
+            "card_hash": card_hash,
+            "address_label": addr_label,
+            "order_time": p.get("created_at") or datetime.now().isoformat(),
+            "status": p.get("status", "")
+        }
 
         new_accounts.append({
             "account_id": acc_id,
@@ -352,6 +523,13 @@ def _ingest_razorpay(merchant_id: str):
             "refund_requested": p.get("status") in ["refunded", "failed"],
             "order_time": p.get("created_at") or datetime.now().isoformat()
         })
+
+    # Save payment metadata
+    try:
+        with open(meta_file, "w", encoding="utf-8") as f:
+            json.dump(gamma_meta, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        print(f"Warning saving gamma payment meta: {e}")
 
     df_new_accs = pd.DataFrame(new_accounts).drop_duplicates(subset=["account_id"])
     df_new_ords = pd.DataFrame(new_orders).drop_duplicates(subset=["order_id"])
@@ -429,9 +607,20 @@ def get_razorpay_payments(authorization: str = Header("")):
         for p in payments:
             acc_id = f"acct_rzp_{p['payment_id'][-8:]}"
             cluster_id = flagged_acct_to_cluster.get(acc_id)
+            card_obj = p.get("card") or {}
+            card_label = ""
+            if card_obj and (card_obj.get("last4") or card_obj.get("network")):
+                issuer_str = f" ({card_obj.get('issuer')})" if card_obj.get('issuer') else ""
+                card_label = f"{card_obj.get('network', 'Card')} \u2022\u2022\u2022\u2022 {card_obj.get('last4', '')}{issuer_str}".strip()
+            elif p.get("vpa"):
+                card_label = f"UPI: {p.get('vpa')}"
+            else:
+                card_label = p.get("method") or "Card"
+
             enriched.append({
                 **p,
                 "account_id": acc_id,
+                "card_label": card_label,
                 "is_flagged_ring": cluster_id is not None,
                 "cluster_id": cluster_id,
             })

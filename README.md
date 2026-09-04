@@ -10,25 +10,39 @@ Built for precision and scale, Sentinel acts as an intelligent watchdog. It iden
 
 ## 🚀 About Sentinel
 
-Built for the **Razorpay /buildathon 2026**, **Sentinel** is a dual-engine AI risk management platform designed to secure your business on two critical fronts:
+Built for the **Razorpay /buildathon 2026**, **Sentinel** is an enterprise AI risk management platform designed to secure digital merchants across three vital dimensions:
 
 ### 1. Real-Time Abuse Ring Detector
-As fraud techniques evolve into coordinated network attacks, traditional rule-based systems fall short. Sentinel leverages multi-dimensional signal extraction and deterministic graph clustering to uncover hidden connections between seemingly unrelated accounts. It proactively identifies and blocks coordinated abuse rings (e.g., promo farming, return fraud) before they can impact your bottom line.
+As fraud techniques evolve from isolated bad actors into organized network attacks, traditional rule-based filters fail. Sentinel uses multi-dimensional signal extraction and deterministic graph clustering to expose hidden links between seemingly disconnected buyer accounts. It proactively isolates and flags coordinated abuse rings (e.g., promo farming, refund syndicates, and return fraud) before they can impact your bottom line.
 
-### 2. API Key Leak Scanner
-Security starts at the source. A pervasive vulnerability identified across merchant integrations is the accidental exposure of API credentials—specifically when developers unintentionally leave active API keys embedded in frontend client-side scripts, application bundles, or version control repositories.
+### 2. Live Payments & Real-Time Razorpay Ingestion
+Sentinel connects directly to the **Razorpay Payments API** to ingest live test-mode transactions in real time. Transactions are continuously enriched with card/VPA fingerprinting and cross-referenced against active abuse clusters, enabling risk teams to monitor payment flow health, catch card-testing spikes, and trace payments back to active syndicates with one click.
 
-Taking direct reference from Razorpay's documented **Payouts Best Practices** and integration guidelines, leaving API keys exposed in frontend code or pushed to repositories represents a critical security risk that can lead to credential theft, unauthorized API access, and transaction manipulation. Sentinel incorporates a dedicated, standalone credential scanner to address this major issue proactively. It audits merchant codebases, frontend files, git commit histories, and `.gitignore` configurations for leaked Razorpay Live and Test keys (`rzp_live_*`, `rzp_test_*`), intercepting exposures before code goes live to ensure integrations remain airtight.
+### 3. API Key Leak Scanner
+Security starts at the source. Taking direct reference from Razorpay's documented **Payouts Best Practices** and developer integration guidelines, leaving private API keys in client-side code or public version control is a major security vulnerability. Sentinel features a standalone scanner that audits frontends, build artifacts, git commit history, and `.gitignore` hygiene for exposed Razorpay Live and Test keys (`rzp_live_*`, `rzp_test_*`), keeping credentials secure before deployment.
 
-> **Important Note for the Buildathon:** The frontend dashboard provided in this repository serves purely as a visual showcase. It is designed to demonstrate the capabilities and outputs of the Sentinel platform in a digestible format for the buildathon. However, the **Abuse Ring Detector** and **API Key Leak Scanner** are fundamentally independent, modular tools. In a real-world production environment, these backend modules are intended to be integrated directly into a merchant's existing infrastructure, risk engines, or CI/CD pipelines as standalone services.
+> **Important Note for the Buildathon:** The frontend dashboard provided in this repository serves as a visual control center demonstrating the capabilities of Sentinel. In production, the **Abuse Ring Detector**, **Live Ingestion Engine**, and **API Key Leak Scanner** are modular services engineered to integrate into existing merchant checkout pipelines, risk orchestration platforms, or CI/CD workflows.
 
 ## 🕵️‍♂️ How it Detects Abuse Rings
 
-Sentinel's detection engine works in three core phases:
+Sentinel's detection engine operates in three core phases:
 
-1. **Signal Extraction**: Extracts shared entities across accounts such as Device IDs, IP Addresses, Shipping/Billing Addresses, Card Fingerprints, and transaction timings.
-2. **Deterministic Clustering**: Models these signals as a graph to deterministically cluster accounts that share a suspiciously high overlap of identifiable markers.
-3. **LLM-Powered Contextualization & Scoring**: Leverages Large Language Models to evaluate clustered data, providing a risk score and a human-readable explanation of *why* the cluster is flagged, ensuring your risk teams can make swift, informed decisions.
+1. **Signal Extraction**: Extracts shared entities across accounts such as Device IDs, IP Addresses, Shipping/Billing Addresses, Card Fingerprints (BIN/IIN, card network, issuing bank, last 4 digits), and transaction timing patterns.
+2. **Deterministic Clustering**: Models these signals as an entity graph to deterministically cluster accounts that share a suspiciously high overlap of identifiable markers.
+3. **LLM-Powered Contextualization & Scoring**: Leverages Large Language Models to evaluate clustered network topologies, generating a risk score and an interpretable narrative of *why* the syndicate was flagged, giving fraud analysts instant context.
+
+## 💳 Live Payments & Real-Time Razorpay Ingestion
+
+Accessible via the **Live Payments** tab (`/payments`), this module provides real-time visibility into incoming payments directly from the Razorpay API and correlates them with Sentinel's risk detection engine:
+
+1. **Direct Razorpay Test-Mode Sync**: Connects natively to Razorpay via your test credentials (`RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`). With the **"Sync Razorpay"** action (`POST /razorpay/ingest`), new payments are fetched instantly and incorporated into Sentinel's data pipeline.
+2. **Dynamic Abuse Ring Cross-Referencing**: Every transaction is cross-referenced in real time against active graph clusters. If a payment originates from an account belonging to a flagged syndicate, it is badged with a high-visibility, pulsing **"Ring Flagged"** indicator along with its specific cluster ID.
+3. **One-Click Deep-Link Investigation**: Clicking any **"Ring Flagged"** badge instantly navigates the analyst to the Ring Detector view (`/`), isolating the corresponding syndicate graph and displaying the full LLM forensic explanation.
+4. **Card & Payment Fingerprinting**: Enriches raw payment data by extracting card BINs, card issuers (e.g., HDFC, ICICI, SBI), network brands (Visa, Mastercard, RuPay), tokenized card identifiers, and UPI VPAs without storing unmasked sensitive payment data.
+5. **Operational Health & Filtering**:
+   - **Real-Time KPIs**: Track Total Ingested Payments, Captured Volume (₹ INR), Failed Authorization Attempts (highlighting rapid card testing or velocity abuse), and Ring-Flagged transaction counts.
+   - **Instant Search**: Search transactions on the fly by Payment ID (`pay_*`), customer email address, or contact number.
+   - **Status Tabs**: Filter between **All**, **Captured**, **Failed**, and **Abuse Rings** to rapidly triage payment anomalies.
 
 ## 🔑 How the API Key Leak Scanner Works
 
@@ -42,36 +56,41 @@ Formulated with reference to Razorpay's **Major Security Risks** and **Common Pr
 
 Sentinel is built using a modern, decoupled architecture designed for rapid iteration and scalability:
 
-- **Frontend (Dashboard)**: Next.js (React), Tailwind CSS, and shadcn/ui for a highly responsive, modern risk management interface.
-- **Backend API**: Python (FastAPI/Flask) for high-throughput, low-latency API endpoints serving the dashboard.
+- **Frontend (Dashboard)**: Next.js (React), Tailwind CSS, and Lucide icons featuring the **Ring Detector** (`/`), **Live Payments Monitor** (`/payments`), and **Key Leak Scanner** (`/key-scanner`).
+- **Backend API**: Python (FastAPI) providing high-throughput endpoints for cluster detection, Razorpay synchronization (`/razorpay/payments`, `/razorpay/ingest`), authentication, and key auditing.
 - **Data Pipeline**: Python-based ingestion, normalization, and synthetic data generation scripts.
-- **Detection & AI Engine**: Network graph clustering algorithms coupled with LLM inference (GPT models) for semantic risk analysis.
-- **Database**: Supabase / PostgreSQL for robust, relational data storage.
+- **Detection & AI Engine**: Network graph clustering algorithms coupled with LLM inference (via Groq / OpenAI) for semantic risk analysis.
+- **Database**: Local SQLite with bcrypt authentication and Supabase / PostgreSQL schema support.
 
 ### Directory Structure
 
 ```text
 sentinel/
-├── api/             # Backend API routes and main application logic
-├── dashboard/       # Next.js frontend dashboard
-├── data/            # Synthetic data generation and raw data storage
-├── db/              # Database schemas and seeding scripts
+├── api/             # FastAPI routes (clustering, auth, /razorpay/payments, /razorpay/ingest)
+├── dashboard/       # Next.js frontend (Ring Detector, Live Payments, Key Scanner)
+│   └── src/app/
+│       ├── page.tsx          # Ring Detector & visual cluster explanation
+│       ├── payments/page.tsx # Live Payments monitor & Razorpay sync
+│       └── key-scanner/      # Leaked API key detection & remediation
+├── data/            # Synthetic transaction data and payment metadata storage
+├── db/              # Database schema, migrations, and merchant seed scripts
 ├── detection/       # Core clustering and signal extraction algorithms
 ├── eval/            # Evaluation scripts for detection accuracy
-├── ingestion/       # Razorpay client and data normalization logic
-├── key-scanner/     # Standalone scanner detecting leaked API keys in merchant frontends & repos
-├── llm/             # LLM client and prompt engineering for cluster explanations
+├── ingestion/       # Razorpay client (test-mode payment pull) & normalization
+├── key-scanner/     # Standalone scanner detecting leaked API keys in frontends & git repos
+├── llm/             # LLM prompt engineering and cluster narrative explanations
 └── scripts/         # Utility scripts (test data generation, environment setup)
 ```
 
 ## 🔐 Demo Accounts
 
-To explore the dashboard as a merchant, use any of the following demo credentials.
+To explore the dashboard, log in with any of the following pre-configured demo merchant accounts:
 
 **Password for all demo accounts:** `password123`
 
-- 🏢 `merchant_alpha@demo.sentinel`
-- 🏢 `merchant_beta@demo.sentinel`
+- 🏢 `merchant_alpha@demo.sentinel` — **Alpha Electronics** (Pre-calculated synthetic abuse ring detection across cross-merchant electronics orders)
+- 🏢 `merchant_beta@demo.sentinel` — **Beta Fashion** (Pre-calculated synthetic abuse rings focused on promo & return fraud)
+- 🏢 `merchant_gamma@demo.sentinel` — **Gamma Groceries** (Connected to **Live Razorpay Test Mode Payments** with real-time API syncing & dynamic ring detection)
 
 ## ⚡ Quick Setup
 
@@ -89,7 +108,9 @@ cd sentinel
 ```bash
 cp .env.example .env
 ```
-*Open the `.env` file and populate it with your Supabase credentials and LLM API keys.*
+*Open `.env` and configure your credentials:*
+- `GROQ_API_KEY`: Required for LLM-powered ring explanations (free at console.groq.com).
+- `RAZORPAY_KEY_ID` & `RAZORPAY_KEY_SECRET`: *(Optional)* Your Razorpay test-mode API keys to enable live payment ingestion for Gamma Groceries.
 
 ### 3. Install Dependencies
 
@@ -100,17 +121,13 @@ npm run setup
 
 ### 4. Database Setup
 
-1. Run the SQL commands found in `db/schema.sql` within your Supabase SQL Editor to provision the tables.
-2. Seed the database with demo merchants:
-```bash
-python db/seed_demo_merchants.py
-```
+The database initializes and seeds the demo accounts automatically upon API startup. If you wish to provision external Supabase tables, execute `db/schema.sql` in your Supabase SQL Editor.
 
 ### 5. Generate Synthetic Data & Run Detection
 
-> **Note:** The synthetic data generation is strictly for testing purposes. The Alpha and Beta demo accounts come with detections already pre-calculated on this synthetic data for easy exploration. On the other hand, real Razorpay test-mode payments are synced using the syncing function, and the "Gamma Groceries" demo merchant showcases the detection of these real-time test payments in action.
+> **Note:** The Alpha and Beta demo accounts come with detections already pre-calculated on synthetic data for instant exploration. The **Gamma Groceries** account is connected directly to Razorpay test mode; when you navigate to the **Live Payments** page and click **"Sync Razorpay"**, real test payments are ingested and dynamically evaluated against the clustering engine.
 
-To test the system locally, you can generate synthetic abuse data and run the evaluation pipeline:
+To generate new synthetic abuse data and run the evaluation pipeline locally:
 
 ```bash
 # Generate synthetic transactional data
@@ -129,3 +146,5 @@ npm start
 ```
 
 Visit `http://localhost:3003` to access the Sentinel Dashboard.
+- Sign in as **Gamma Groceries** (`merchant_gamma@demo.sentinel` / `password123`) to view and sync **Live Payments**.
+- Sign in as **Alpha Electronics** or **Beta Fashion** to explore pre-calculated cross-merchant abuse rings.

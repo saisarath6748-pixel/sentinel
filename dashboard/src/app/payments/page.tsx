@@ -31,6 +31,14 @@ interface Payment {
   contact: string;
   method: string;
   card_id: string;
+  card_label?: string;
+  card?: {
+    last4?: string;
+    network?: string;
+    issuer?: string;
+    type?: string;
+  };
+  vpa?: string;
   created_at: string;
   status: string;
   account_id: string;
@@ -406,13 +414,24 @@ export default function PaymentsPage() {
                             {/* Method & Card */}
                             <td className="py-3.5 px-4 whitespace-nowrap">
                               <div className="flex items-center gap-2">
-                                <span className="text-white/70 text-xs capitalize">
-                                  {p.method}
-                                </span>
-                                {p.card_id && (
-                                  <span className="font-mono text-[10px] bg-white/10 text-white/70 px-1.5 py-0.5 rounded border border-white/10">
-                                    {p.card_id.slice(-8)}
-                                  </span>
+                                {p.card_label ? (
+                                  <div className="flex items-center gap-1.5 px-2 py-1 bg-white/5 border border-white/10 rounded-lg">
+                                    <CreditCard className="w-3.5 h-3.5 text-[#0D94FB]" />
+                                    <span className="text-white text-xs font-medium">
+                                      {p.card_label}
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <span className="text-white/70 text-xs capitalize">
+                                      {p.method}
+                                    </span>
+                                    {p.card_id && (
+                                      <span className="font-mono text-[10px] bg-white/10 text-white/70 px-1.5 py-0.5 rounded border border-white/10">
+                                        {p.card_id.slice(-8)}
+                                      </span>
+                                    )}
+                                  </>
                                 )}
                               </div>
                             </td>

@@ -43,18 +43,38 @@ def explain_cluster(cluster_data: dict) -> str:
     # here since it's only used for plain-English explanations, never for detection.
     model = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
 
-    prompt = f"""You are a helpful fraud assistant for a small business owner. 
-They have a dashboard showing suspicious groups of buyers (clusters).
+    # Format exact indicators for the LLM
+    exact_signals_desc = []
+    for s in cluster_data.get("exact_shared_signals", []):
+        exact_signals_desc.append(f"{s.get('label')}: {s.get('value')}")
+    signals_str = "; ".join(exact_signals_desc) if exact_signals_desc else ", ".join(cluster_data.get("shared_signals", []))
+    
+    phones = cluster_data.get("phones", [])
+    phones_str = f"Associated phone(s): {', '.join(phones)}" if phones else ""
+    
+    vol = cluster_data.get("total_volume")
+    curr = "₹" if cluster_data.get("currency") == "INR" else "$"
+    vol_str = f"Total order volume: {curr}{vol}" if vol else ""
+
+    prompt = f"""You are a helpful fraud assistant for an e-commerce merchant. 
+They have a dashboard showing suspicious groups of accounts (abuse rings).
 Given this data, write a 2-sentence explanation for the merchant.
 
-Cluster data: {cluster_data}
+Cluster Summary:
+- Cluster ID: {cluster_data.get('cluster_id')}
+- Number of accounts: {cluster_data.get('num_accounts')}
+- Shared indicators: {signals_str}
+{phones_str}
+{vol_str}
+- Timing span: accounts placed orders in a tight window
+- Raw cluster data: {cluster_data}
 
 Rules:
-- Speak in extremely simple, non-technical terms. No jargon (do not use the words "hash", "signal", "overlap", or "metric").
-- Do not mention the exact math or breakdown numbers.
-- Simply tell the merchant *why* these accounts look suspicious (e.g., "These 5 accounts all share the same device and shipping address, and bought items at the exact same time").
-- If there are high refunds or promo abuse, mention it simply ("They are abusing promo codes").
-- Keep it friendly, short, and very easy to understand."""
+- Speak in extremely simple, non-technical terms. No jargon (do not use words like "hash", "signal", "overlap", or "metric").
+- When exact details are provided (such as card brand and last 4 digits like MasterCard ending in 5449, or phone number), explicitly mention them so the merchant knows exactly what was shared.
+- STRICT: ONLY mention the indicators that are actually listed under "Shared indicators". Never claim accounts shared an address or device unless "Shared Address" or "Shared Device" is explicitly listed.
+- If high refunds or promo abuse exist, mention it simply.
+- Keep it short (2 sentences), professional, friendly, and factual."""
 
     response = client.chat.completions.create(
         model=model,

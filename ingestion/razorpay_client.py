@@ -52,6 +52,19 @@ def fetch_recent_payments(count: int = 50) -> list[dict]:
 
     payments = []
     for p in items:
+        card_obj = p.get("card") or {}
+        card_info = None
+        if card_obj and (card_obj.get("last4") or card_obj.get("token_iin") or card_obj.get("network")):
+            card_info = {
+                "id": card_obj.get("id", ""),
+                "last4": card_obj.get("last4", ""),
+                "network": card_obj.get("network", ""),
+                "type": card_obj.get("type", ""),
+                "issuer": card_obj.get("issuer", ""),
+                "token_iin": card_obj.get("token_iin", ""),
+                "name": card_obj.get("name", ""),
+            }
+
         payments.append({
             "payment_id": p.get("id", ""),
             "amount": p.get("amount", 0) / 100,  # paise -> rupees
@@ -59,6 +72,10 @@ def fetch_recent_payments(count: int = 50) -> list[dict]:
             "contact": p.get("contact", ""),
             "method": p.get("method", ""),
             "card_id": p.get("card_id") or "",      # tokenized, never raw
+            "card": card_info,
+            "vpa": p.get("vpa") or "",
+            "notes": p.get("notes") or {},
+            "description": p.get("description") or "",
             "created_at": datetime.fromtimestamp(
                 p.get("created_at", 0)
             ).isoformat() if p.get("created_at") else "",

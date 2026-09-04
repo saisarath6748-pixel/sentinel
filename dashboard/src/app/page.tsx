@@ -6,11 +6,29 @@ import FloatingLines from '@/components/FloatingLines';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { AlertCircle, ShieldAlert, Activity, Users, Database, Zap, ChevronDown } from 'lucide-react';
+import { AlertCircle, ShieldAlert, Activity, Users, Database, Zap, ChevronDown, CreditCard, Phone, MapPin, Mail, DollarSign } from 'lucide-react';
 import SpotlightCard from '@/components/SpotlightCard';
 import PixelCard from '@/components/PixelCard';
 import { useAuth } from '@/components/AuthContext';
 import TextType from '@/components/TextType';
+
+interface ExactSignal {
+  signal: string;
+  type: 'card' | 'address' | 'device' | 'phone';
+  label: string;
+  value: string;
+}
+
+interface LinkedAccountDetail {
+  account_id: string;
+  email: string;
+  phone: string;
+  card_label: string;
+  order_id: string;
+  amount: number;
+  status: string;
+  order_time: string;
+}
 
 interface Cluster {
   cluster_id: string;
@@ -25,6 +43,12 @@ interface Cluster {
     timing_tightness: number;
     behavior_abuse: number;
   };
+  exact_shared_signals?: ExactSignal[];
+  linked_accounts_detail?: LinkedAccountDetail[];
+  total_volume?: number;
+  currency?: string;
+  emails?: string[];
+  phones?: string[];
 }
 
 const LINES_GRADIENT = ["#94a3b8", "#6a6a6a", "#000000"];
@@ -288,10 +312,33 @@ export default function Home() {
                             {cluster.score.toFixed(3)}
                           </span>
                         </div>
-                        <div className="flex items-center gap-3 mt-1">
+                        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                           <span className="text-white/40 text-xs">{cluster.num_accounts} accounts</span>
                           <span className="text-white/20">·</span>
-                          <span className="text-white/40 text-xs">{cluster.shared_signals.join(', ')}</span>
+                          {cluster.exact_shared_signals && cluster.exact_shared_signals.length > 0 ? (
+                            cluster.exact_shared_signals.map((sig, idx) => (
+                              <span
+                                key={idx}
+                                className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium bg-[#0D94FB]/10 text-[#0D94FB] border border-[#0D94FB]/20"
+                              >
+                                {sig.type === 'card' && <CreditCard className="w-3 h-3" />}
+                                {sig.type === 'phone' && <Phone className="w-3 h-3" />}
+                                {sig.type === 'address' && <MapPin className="w-3 h-3" />}
+                                {sig.type === 'device' && <ShieldAlert className="w-3 h-3" />}
+                                {sig.label}: {sig.value}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-white/40 text-xs">{cluster.shared_signals.join(', ')}</span>
+                          )}
+                          {cluster.total_volume !== undefined && cluster.total_volume > 0 && (
+                            <>
+                              <span className="text-white/20">·</span>
+                              <span className="text-emerald-400 text-xs font-semibold">
+                                {cluster.currency === 'INR' ? '₹' : '$'}{cluster.total_volume.toLocaleString()} vol
+                              </span>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -321,45 +368,101 @@ export default function Home() {
                     </div>
 
                     {/* Details */}
-                    <div className="grid grid-cols-3 gap-3">
-                      <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-                        <div className="text-[11px] text-white/40 font-bold uppercase tracking-widest mb-3">Risk Breakdown</div>
-                        <div className="space-y-2">
-                          {[
-                            { label: 'Signal Overlap', value: cluster.breakdown.signal_overlap },
-                            { label: 'Timing', value: cluster.breakdown.timing_tightness },
-                            { label: 'Behavior', value: cluster.breakdown.behavior_abuse },
-                          ].map(item => (
-                            <div key={item.label}>
-                              <div className="flex justify-between text-xs mb-1">
-                                <span className="text-white/50">{item.label}</span>
-                                <span className="text-white font-medium">{(item.value * 100).toFixed(0)}%</span>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                      {/* Risk Breakdown */}
+                      <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 flex flex-col justify-between">
+                        <div>
+                          <div className="text-[11px] text-white/40 font-bold uppercase tracking-widest mb-3">Risk Breakdown</div>
+                          <div className="space-y-2.5">
+                            {[
+                              { label: 'Signal Overlap', value: cluster.breakdown.signal_overlap },
+                              { label: 'Timing Window', value: cluster.breakdown.timing_tightness },
+                              { label: 'Behavioral Abuse', value: cluster.breakdown.behavior_abuse },
+                            ].map(item => (
+                              <div key={item.label}>
+                                <div className="flex justify-between text-xs mb-1">
+                                  <span className="text-white/50">{item.label}</span>
+                                  <span className="text-white font-medium">{(item.value * 100).toFixed(0)}%</span>
+                                </div>
+                                <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+                                  <div className="h-full bg-[#0D94FB] rounded-full transition-all" style={{ width: `${item.value * 100}%` }} />
+                                </div>
                               </div>
-                              <div className="h-1 bg-white/10 rounded-full overflow-hidden">
-                                <div className="h-full bg-[#0D94FB] rounded-full transition-all" style={{ width: `${item.value * 100}%` }} />
-                              </div>
-                            </div>
-                          ))}
+                            ))}
+                          </div>
                         </div>
-                      </div>
-
-                      <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-                        <div className="text-[11px] text-white/40 font-bold uppercase tracking-widest mb-3">Shared Signals</div>
-                        <div className="flex flex-wrap gap-2">
-                          {cluster.shared_signals.map(sig => (
-                            <span key={sig} className="px-2.5 py-1 bg-white/10 text-xs text-white rounded-lg border border-white/10">
-                              {sig}
+                        {cluster.total_volume !== undefined && cluster.total_volume > 0 && (
+                          <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs">
+                            <span className="text-white/40">Total Ring Volume:</span>
+                            <span className="text-emerald-400 font-bold text-sm">
+                              {cluster.currency === 'INR' ? '₹' : '$'}{cluster.total_volume.toLocaleString()}
                             </span>
-                          ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Shared Signals */}
+                      <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                        <div className="text-[11px] text-white/40 font-bold uppercase tracking-widest mb-3">Exact Shared Signals</div>
+                        <div className="space-y-2.5">
+                          {cluster.exact_shared_signals && cluster.exact_shared_signals.length > 0 ? (
+                            cluster.exact_shared_signals.map((sig, idx) => (
+                              <div key={idx} className="p-3 rounded-lg bg-white/5 border border-white/10 flex items-start gap-3">
+                                <div className="p-2 rounded-md bg-[#0D94FB]/15 text-[#0D94FB] mt-0.5 flex-shrink-0">
+                                  {sig.type === 'card' && <CreditCard className="w-4 h-4" />}
+                                  {sig.type === 'phone' && <Phone className="w-4 h-4" />}
+                                  {sig.type === 'address' && <MapPin className="w-4 h-4" />}
+                                  {sig.type === 'device' && <ShieldAlert className="w-4 h-4" />}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="text-[10px] text-white/40 uppercase font-bold tracking-wider">{sig.label}</div>
+                                  <div className="text-xs font-semibold text-white mt-0.5 break-all">{sig.value}</div>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="flex flex-wrap gap-2">
+                              {cluster.shared_signals.map(sig => (
+                                <span key={sig} className="px-2.5 py-1 bg-white/10 text-xs text-white rounded-lg border border-white/10">
+                                  {sig}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
 
-                      <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-                        <div className="text-[11px] text-white/40 font-bold uppercase tracking-widest mb-3">Linked Accounts</div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {cluster.account_ids.map(id => (
-                            <span key={id} className="text-[11px] font-mono text-white/70 bg-white/5 border border-white/10 rounded-md px-2 py-0.5">{id}</span>
-                          ))}
+                      {/* Linked Accounts */}
+                      <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 flex flex-col">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="text-[11px] text-white/40 font-bold uppercase tracking-widest">
+                            Linked Accounts ({cluster.num_accounts})
+                          </div>
+                        </div>
+                        <div className="max-h-60 overflow-y-auto space-y-2 pr-1">
+                          {cluster.linked_accounts_detail && cluster.linked_accounts_detail.length > 0 ? (
+                            cluster.linked_accounts_detail.map((acct) => (
+                              <div key={acct.account_id} className="p-2.5 rounded-lg bg-white/5 border border-white/10 text-xs">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="font-mono text-[11px] text-[#0D94FB] font-semibold">{acct.account_id}</span>
+                                  <span className="text-emerald-400 font-bold text-xs whitespace-nowrap">
+                                    {cluster.currency === 'INR' ? '₹' : '$'}{acct.amount.toFixed(2)}
+                                  </span>
+                                </div>
+                                <div className="text-[11px] text-white/70 truncate mt-1" title={acct.email}>{acct.email}</div>
+                                <div className="flex items-center justify-between mt-1.5 text-[10px] text-white/40">
+                                  <span className="font-mono truncate max-w-[130px]" title={acct.order_id}>{acct.order_id}</span>
+                                  <span>{acct.order_time ? new Date(acct.order_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</span>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="flex flex-wrap gap-1.5">
+                              {cluster.account_ids.map(id => (
+                                <span key={id} className="text-[11px] font-mono text-white/70 bg-white/5 border border-white/10 rounded-md px-2 py-0.5">{id}</span>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
