@@ -298,6 +298,13 @@ def razorpay_ingest(authorization: str = Header("")):
     """Fetch recent payments from Razorpay test mode and append to CSVs."""
     merchant_id = _verify_token(authorization)
     
+    # 1ed1d417-6ce7-4b1d-ba96-1a08097b591a is Gamma Groceries
+    if merchant_id != "1ed1d417-6ce7-4b1d-ba96-1a08097b591a":
+        raise HTTPException(
+            status_code=403, 
+            detail="Test mode payments sync is only enabled for Gamma Groceries. The other demo accounts use synthetic data."
+        )
+    
     try:
         from ingestion.razorpay_client import fetch_recent_payments
         payments = fetch_recent_payments()
@@ -323,13 +330,13 @@ def razorpay_ingest(authorization: str = Header("")):
             card_id = p.get("card_id") or "card_unknown"
             
             # Simulated Account ID
-            acc_id = "acct_rzp_" + hashlib.md5(email.encode()).hexdigest()[:8]
+            acc_id = "acct_rzp_" + hashlib.md5(str(email).encode()).hexdigest()[:8]
             
             # Map Contact to Address Hash and Device Hash for the demo
             # In a real app, Razorpay provides IP via webhooks or you collect it on frontend
-            device_hash = hashlib.md5(contact.encode()).hexdigest()[:16]
-            address_hash = hashlib.md5((contact + "addr").encode()).hexdigest()[:16]
-            card_hash = hashlib.md5(card_id.encode()).hexdigest()[:16]
+            device_hash = hashlib.md5(str(contact).encode()).hexdigest()[:16]
+            address_hash = hashlib.md5((str(contact) + "addr").encode()).hexdigest()[:16]
+            card_hash = hashlib.md5(str(card_id).encode()).hexdigest()[:16]
             
             new_accounts.append({
                 "account_id": acc_id,

@@ -16,7 +16,9 @@ Built for the **Razorpay /buildathon 2026**, **Sentinel** is a dual-engine AI ri
 As fraud techniques evolve into coordinated network attacks, traditional rule-based systems fall short. Sentinel leverages multi-dimensional signal extraction and deterministic graph clustering to uncover hidden connections between seemingly unrelated accounts. It proactively identifies and blocks coordinated abuse rings (e.g., promo farming, return fraud) before they can impact your bottom line.
 
 ### 2. API Key Leak Scanner
-Security starts at the source. Sentinel ships with a bundled codebase scanner that proactively hunts for exposed Razorpay API secrets before your code goes live. By intercepting leaked credentials, it addresses infrastructure vulnerabilities and prevents unauthorized transactional access, ensuring your merchant integration remains airtight.
+Security starts at the source. A pervasive vulnerability identified across merchant integrations is the accidental exposure of API credentials—specifically when developers unintentionally leave active API keys embedded in frontend client-side scripts, application bundles, or version control repositories.
+
+Taking direct reference from Razorpay's documented **Major Security Risks** and **Common Problems** integration guides, leaving API keys exposed in frontend code or pushed to repositories represents a critical security risk that can lead to credential theft, unauthorized API access, and transaction manipulation. Sentinel incorporates a dedicated, standalone credential scanner to address this major issue proactively. It audits merchant codebases, frontend files, git commit histories, and `.gitignore` configurations for leaked Razorpay Live and Test keys (`rzp_live_*`, `rzp_test_*`), intercepting exposures before code goes live to ensure integrations remain airtight.
 
 > **Important Note for the Buildathon:** The frontend dashboard provided in this repository serves purely as a visual showcase. It is designed to demonstrate the capabilities and outputs of the Sentinel platform in a digestible format for the buildathon. However, the **Abuse Ring Detector** and **API Key Leak Scanner** are fundamentally independent, modular tools. In a real-world production environment, these backend modules are intended to be integrated directly into a merchant's existing infrastructure, risk engines, or CI/CD pipelines as standalone services.
 
@@ -27,6 +29,14 @@ Sentinel's detection engine works in three core phases:
 1. **Signal Extraction**: Extracts shared entities across accounts such as Device IDs, IP Addresses, Shipping/Billing Addresses, Card Fingerprints, and transaction timings.
 2. **Deterministic Clustering**: Models these signals as a graph to deterministically cluster accounts that share a suspiciously high overlap of identifiable markers.
 3. **LLM-Powered Contextualization & Scoring**: Leverages Large Language Models to evaluate clustered data, providing a risk score and a human-readable explanation of *why* the cluster is flagged, ensuring your risk teams can make swift, informed decisions.
+
+## 🔑 How the API Key Leak Scanner Works
+
+Formulated with reference to Razorpay's **Major Security Risks** and **Common Problems** developer documentation, this standalone module addresses the widespread industry issue of merchants leaving private API keys in client-facing frontend assets or committing them to repositories:
+
+1. **Frontend & Codebase Inspection**: Scans client-side JavaScript/TypeScript files, frontend build artifacts, and project directories to ensure private merchant API keys are never bundled into customer-facing applications.
+2. **Repository & Git History Auditing**: Analyzes working directories as well as historical git commits using regex signature matching and Shannon entropy to catch hardcoded Razorpay Live/Test credentials (`rzp_live_*`, `rzp_test_*`) and service tokens.
+3. **Hygiene & Actionable Remediation**: Verifies `.gitignore` configurations against common secret patterns (e.g., `.env`, `.env.local`) and generates clear, actionable remediation guidance, including key rotation protocols and secure environment variable workflows.
 
 ## 🏗️ Architecture
 
@@ -49,7 +59,7 @@ sentinel/
 ├── detection/       # Core clustering and signal extraction algorithms
 ├── eval/            # Evaluation scripts for detection accuracy
 ├── ingestion/       # Razorpay client and data normalization logic
-├── key-scanner/     # Bundled API key leak scanner for merchant codebases
+├── key-scanner/     # Standalone scanner detecting leaked API keys in merchant frontends & repos
 ├── llm/             # LLM client and prompt engineering for cluster explanations
 └── scripts/         # Utility scripts (test data generation, environment setup)
 ```
