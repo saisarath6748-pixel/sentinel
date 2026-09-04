@@ -113,4 +113,4 @@ Start both the backend API and frontend dashboard concurrently:
 npm start
 ```
 
-Visit `http://localhost:3000` to access the Sentinel Dashboard.
+Visit `http://localhost:3003` to access the Sentinel Dashboard.
