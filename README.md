@@ -93,7 +93,7 @@ python db/seed_demo_merchants.py
 
 ### 5. Generate Synthetic Data & Run Detection
 
-> **Note:** The synthetic data generation is strictly for testing purposes. Real Razorpay test-mode payments are synced using the syncing function, and the "Gamma Groceries" demo merchant showcases the detection of these test payments in action.
+> **Note:** The synthetic data generation is strictly for testing purposes. The Alpha and Beta demo accounts come with detections already pre-calculated on this synthetic data for easy exploration. On the other hand, real Razorpay test-mode payments are synced using the syncing function, and the "Gamma Groceries" demo merchant showcases the detection of these real-time test payments in action.
 
 To test the system locally, you can generate synthetic abuse data and run the evaluation pipeline:
 
