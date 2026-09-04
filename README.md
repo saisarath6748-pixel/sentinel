@@ -72,6 +72,7 @@ To explore the dashboard as a merchant, use any of the following demo credential
 
 - 🏢 `merchant_alpha@demo.sentinel`
 - 🏢 `merchant_beta@demo.sentinel`
+- 🏢 `merchant_gamma@demo.sentinel`
 
 ## ⚡ Quick Setup
 
