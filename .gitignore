@@ -1,0 +1,42 @@
+# Environment secrets — NEVER commit
+.env
+.env.local
+.env.production
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+.venv/
+venv/
+env/
+
+# Node / Next.js
+node_modules/
+.next/
+next-env.d.ts
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local database (generated on first run)
+db/sentinel.db
+
+# Uploaded files (generated at runtime)
+uploads/
+
+# Supabase local (legacy)
+.supabase/

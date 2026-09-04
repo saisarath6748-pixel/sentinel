@@ -1,0 +1,361 @@
+[
+  {
+    "cluster_id": "ring_000",
+    "account_ids": [
+      "acct_ring000_00",
+      "acct_ring000_01",
+      "acct_ring000_02"
+    ],
+    "is_fraud_ring": true,
+    "shared_signals": [
+      "card_hash",
+      "address_hash"
+    ]
+  },
+  {
+    "cluster_id": "ring_001",
+    "account_ids": [
+      "acct_ring001_00",
+      "acct_ring001_01",
+      "acct_ring001_02"
+    ],
+    "is_fraud_ring": true,
+    "shared_signals": [
+      "address_hash",
+      "card_hash"
+    ]
+  },
+  {
+    "cluster_id": "ring_002",
+    "account_ids": [
+      "acct_ring002_00",
+      "acct_ring002_01",
+      "acct_ring002_02",
+      "acct_ring002_03"
+    ],
+    "is_fraud_ring": true,
+    "shared_signals": [
+      "card_hash",
+      "device_hash",
+      "address_hash"
+    ]
+  },
+  {
+    "cluster_id": "ring_003",
+    "account_ids": [
+      "acct_ring003_00",
+      "acct_ring003_01",
+      "acct_ring003_02",
+      "acct_ring003_03",
+      "acct_ring003_04",
+      "acct_ring003_05"
+    ],
+    "is_fraud_ring": true,
+    "shared_signals": [
+      "card_hash",
+      "address_hash"
+    ]
+  },
+  {
+    "cluster_id": "ring_004",
+    "account_ids": [
+      "acct_ring004_00",
+      "acct_ring004_01",
+      "acct_ring004_02"
+    ],
+    "is_fraud_ring": true,
+    "shared_signals": [
+      "card_hash",
+      "device_hash"
+    ]
+  },
+  {
+    "cluster_id": "ring_005",
+    "account_ids": [
+      "acct_ring005_00",
+      "acct_ring005_01",
+      "acct_ring005_02"
+    ],
+    "is_fraud_ring": true,
+    "shared_signals": [
+      "device_hash",
+      "address_hash",
+      "card_hash"
+    ]
+  },
+  {
+    "cluster_id": "ring_006",
+    "account_ids": [
+      "acct_ring006_00",
+      "acct_ring006_01",
+      "acct_ring006_02",
+      "acct_ring006_03",
+      "acct_ring006_04",
+      "acct_ring006_05",
+      "acct_ring006_06",
+      "acct_ring006_07"
+    ],
+    "is_fraud_ring": true,
+    "shared_signals": [
+      "card_hash"
+    ]
+  },
+  {
+    "cluster_id": "ring_007",
+    "account_ids": [
+      "acct_ring007_00",
+      "acct_ring007_01",
+      "acct_ring007_02"
+    ],
+    "is_fraud_ring": true,
+    "shared_signals": [
+      "device_hash",
+      "address_hash"
+    ]
+  },
+  {
+    "cluster_id": "ring_008",
+    "account_ids": [
+      "acct_ring008_00",
+      "acct_ring008_01",
+      "acct_ring008_02"
+    ],
+    "is_fraud_ring": true,
+    "shared_signals": [
+      "device_hash"
+    ]
+  },
+  {
+    "cluster_id": "ring_009",
+    "account_ids": [
+      "acct_ring009_00",
+      "acct_ring009_01",
+      "acct_ring009_02",
+      "acct_ring009_03",
+      "acct_ring009_04"
+    ],
+    "is_fraud_ring": true,
+    "shared_signals": [
+      "address_hash",
+      "card_hash",
+      "device_hash"
+    ]
+  },
+  {
+    "cluster_id": "ring_010",
+    "account_ids": [
+      "acct_ring010_00",
+      "acct_ring010_01",
+      "acct_ring010_02"
+    ],
+    "is_fraud_ring": true,
+    "shared_signals": [
+      "address_hash",
+      "device_hash",
+      "card_hash"
+    ]
+  },
+  {
+    "cluster_id": "ring_011",
+    "account_ids": [
+      "acct_ring011_00",
+      "acct_ring011_01",
+      "acct_ring011_02",
+      "acct_ring011_03",
+      "acct_ring011_04"
+    ],
+    "is_fraud_ring": true,
+    "shared_signals": [
+      "device_hash",
+      "card_hash",
+      "address_hash"
+    ]
+  },
+  {
+    "cluster_id": "ring_012",
+    "account_ids": [
+      "acct_ring012_00",
+      "acct_ring012_01",
+      "acct_ring012_02",
+      "acct_ring012_03",
+      "acct_ring012_04",
+      "acct_ring012_05"
+    ],
+    "is_fraud_ring": true,
+    "shared_signals": [
+      "device_hash",
+      "address_hash"
+    ]
+  },
+  {
+    "cluster_id": "ring_013",
+    "account_ids": [
+      "acct_ring013_00",
+      "acct_ring013_01",
+      "acct_ring013_02"
+    ],
+    "is_fraud_ring": true,
+    "shared_signals": [
+      "card_hash",
+      "device_hash"
+    ]
+  },
+  {
+    "cluster_id": "ring_014",
+    "account_ids": [
+      "acct_ring014_00",
+      "acct_ring014_01",
+      "acct_ring014_02",
+      "acct_ring014_03",
+      "acct_ring014_04"
+    ],
+    "is_fraud_ring": true,
+    "shared_signals": [
+      "card_hash",
+      "device_hash"
+    ]
+  },
+  {
+    "cluster_id": "ring_015",
+    "account_ids": [
+      "acct_ring015_00",
+      "acct_ring015_01",
+      "acct_ring015_02",
+      "acct_ring015_03",
+      "acct_ring015_04"
+    ],
+    "is_fraud_ring": true,
+    "shared_signals": [
+      "card_hash",
+      "device_hash",
+      "address_hash"
+    ]
+  },
+  {
+    "cluster_id": "ring_016",
+    "account_ids": [
+      "acct_ring016_00",
+      "acct_ring016_01",
+      "acct_ring016_02"
+    ],
+    "is_fraud_ring": true,
+    "shared_signals": [
+      "address_hash",
+      "card_hash",
+      "device_hash"
+    ]
+  },
+  {
+    "cluster_id": "ring_017",
+    "account_ids": [
+      "acct_ring017_00",
+      "acct_ring017_01",
+      "acct_ring017_02",
+      "acct_ring017_03"
+    ],
+    "is_fraud_ring": true,
+    "shared_signals": [
+      "card_hash",
+      "device_hash"
+    ]
+  },
+  {
+    "cluster_id": "ring_018",
+    "account_ids": [
+      "acct_ring018_00",
+      "acct_ring018_01",
+      "acct_ring018_02",
+      "acct_ring018_03",
+      "acct_ring018_04",
+      "acct_ring018_05"
+    ],
+    "is_fraud_ring": true,
+    "shared_signals": [
+      "card_hash",
+      "device_hash"
+    ]
+  },
+  {
+    "cluster_id": "ring_019",
+    "account_ids": [
+      "acct_ring019_00",
+      "acct_ring019_01",
+      "acct_ring019_02",
+      "acct_ring019_03",
+      "acct_ring019_04",
+      "acct_ring019_05"
+    ],
+    "is_fraud_ring": true,
+    "shared_signals": [
+      "card_hash",
+      "address_hash"
+    ]
+  },
+  {
+    "cluster_id": "innocent_000",
+    "account_ids": [
+      "acct_inno000_00",
+      "acct_inno000_01",
+      "acct_inno000_02"
+    ],
+    "is_fraud_ring": false,
+    "shared_signals": [
+      "address_hash",
+      "card_hash"
+    ]
+  },
+  {
+    "cluster_id": "innocent_001",
+    "account_ids": [
+      "acct_inno001_00",
+      "acct_inno001_01",
+      "acct_inno001_02"
+    ],
+    "is_fraud_ring": false,
+    "shared_signals": [
+      "address_hash"
+    ]
+  },
+  {
+    "cluster_id": "innocent_002",
+    "account_ids": [
+      "acct_inno002_00",
+      "acct_inno002_01",
+      "acct_inno002_02"
+    ],
+    "is_fraud_ring": false,
+    "shared_signals": [
+      "address_hash",
+      "card_hash"
+    ]
+  },
+  {
+    "cluster_id": "innocent_003",
+    "account_ids": [
+      "acct_inno003_00",
+      "acct_inno003_01",
+      "acct_inno003_02",
+      "acct_inno003_03",
+      "acct_inno003_04"
+    ],
+    "is_fraud_ring": false,
+    "shared_signals": [
+      "address_hash",
+      "card_hash"
+    ]
+  },
+  {
+    "cluster_id": "innocent_004",
+    "account_ids": [
+      "acct_inno004_00",
+      "acct_inno004_01",
+      "acct_inno004_02",
+      "acct_inno004_03"
+    ],
+    "is_fraud_ring": false,
+    "shared_signals": [
+      "address_hash",
+      "card_hash"
+    ]
+  }
+]

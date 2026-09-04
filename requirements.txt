@@ -1,0 +1,10 @@
+razorpay
+groq
+requests
+pandas
+networkx
+fastapi
+uvicorn
+python-dotenv
+PyJWT
+bcrypt

@@ -1,0 +1,16 @@
+{
+  "name": "sentinel",
+  "version": "1.0.0",
+  "description": "Abuse-Ring Sentinel — Real-time Fraud Ring Detection",
+  "private": true,
+  "scripts": {
+    "install:all": "pip install -r requirements.txt && cd dashboard && npm install",
+    "start:backend": "uvicorn api.main:app --reload --port 8000",
+    "start:frontend": "cd dashboard && npm run dev",
+    "start": "concurrently -n API,UI -c blue,green \"npm run start:backend\" \"npm run start:frontend\"",
+    "setup": "npm install && npm run install:all"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.4"
+  }
+}
