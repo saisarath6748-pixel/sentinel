@@ -122,6 +122,18 @@ def startup():
     init_db()
     seed()
 
+    # If Gamma Groceries has no records in CSV, auto-ingest from Razorpay test mode
+    try:
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        accounts_file = os.path.join(base_dir, "data", "accounts.csv")
+        if os.path.exists(accounts_file):
+            df_accs = pd.read_csv(accounts_file)
+            gamma_exists = (df_accs["merchant_id"] == "1ed1d417-6ce7-4b1d-ba96-1a08097b591a").any()
+            if not gamma_exists:
+                _ingest_razorpay("1ed1d417-6ce7-4b1d-ba96-1a08097b591a")
+    except Exception as e:
+        print(f"Startup Razorpay ingestion warning: {e}")
+
     # Run detection pipeline
     _run_detection()
 
@@ -293,108 +305,145 @@ def refresh():
     return {"status": "refreshed", "clusters_loaded": len(_scored_clusters)}
 
 
+def _ingest_razorpay(merchant_id: str):
+    """Fetch recent test payments from Razorpay and map them into the Sentinel detection schema."""
+    from ingestion.razorpay_client import fetch_recent_payments
+    payments = fetch_recent_payments()
+    if not payments:
+        return {"status": "success", "added_accounts": 0, "added_orders": 0, "total_clusters": len(_scored_clusters)}
+
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    accounts_file = os.path.join(base_dir, "data", "accounts.csv")
+    orders_file = os.path.join(base_dir, "data", "orders.csv")
+
+    new_accounts = []
+    new_orders = []
+
+    for p in payments:
+        email = p.get("email") or "unknown@example.com"
+        contact = p.get("contact") or "0000000000"
+        card_id = p.get("card_id") or "card_unknown"
+
+        # Unique account ID per payment transaction to model multi-account card-testing & abuse rings
+        acc_id = f"acct_rzp_{p['payment_id'][-8:]}"
+
+        # Deterministic hashes for simulated signals based on Razorpay data
+        device_hash = hashlib.md5(str(contact).encode()).hexdigest()[:16]
+        address_hash = hashlib.md5((str(contact) + "addr").encode()).hexdigest()[:16]
+        card_hash = hashlib.md5(str(card_id).encode()).hexdigest()[:16]
+
+        new_accounts.append({
+            "account_id": acc_id,
+            "merchant_id": merchant_id,
+            "email": email,
+            "phone": contact,
+            "device_hash": device_hash,
+            "address_hash": address_hash,
+            "card_hash": card_hash,
+            "signup_time": p.get("created_at") or datetime.now().isoformat()
+        })
+
+        new_orders.append({
+            "order_id": p.get("payment_id"),
+            "account_id": acc_id,
+            "merchant_id": merchant_id,
+            "amount": p.get("amount"),
+            "promo_code_used": "",
+            "refund_requested": p.get("status") in ["refunded", "failed"],
+            "order_time": p.get("created_at") or datetime.now().isoformat()
+        })
+
+    df_new_accs = pd.DataFrame(new_accounts).drop_duplicates(subset=["account_id"])
+    df_new_ords = pd.DataFrame(new_orders).drop_duplicates(subset=["order_id"])
+
+    # Overwrite previous Gamma Groceries records to keep data clean and synchronized
+    if os.path.exists(accounts_file):
+        df_accs = pd.read_csv(accounts_file)
+        df_accs = df_accs[df_accs["merchant_id"] != merchant_id]
+        df_accs = pd.concat([df_accs, df_new_accs], ignore_index=True)
+        df_accs.to_csv(accounts_file, index=False)
+    else:
+        df_new_accs.to_csv(accounts_file, index=False)
+
+    if os.path.exists(orders_file):
+        df_ords = pd.read_csv(orders_file)
+        df_ords = df_ords[df_ords["merchant_id"] != merchant_id]
+        df_ords = pd.concat([df_ords, df_new_ords], ignore_index=True)
+        df_ords.to_csv(orders_file, index=False)
+    else:
+        df_new_ords.to_csv(orders_file, index=False)
+
+    _run_detection()
+
+    return {
+        "status": "success",
+        "added_accounts": len(df_new_accs),
+        "added_orders": len(df_new_ords),
+        "total_clusters": len(_scored_clusters)
+    }
+
+
 @app.post("/razorpay/ingest")
 def razorpay_ingest(authorization: str = Header("")):
     """Fetch recent payments from Razorpay test mode and append to CSVs."""
     merchant_id = _verify_token(authorization)
-    
+
     # 1ed1d417-6ce7-4b1d-ba96-1a08097b591a is Gamma Groceries
     if merchant_id != "1ed1d417-6ce7-4b1d-ba96-1a08097b591a":
         raise HTTPException(
-            status_code=403, 
+            status_code=403,
             detail="Test mode payments sync is only enabled for Gamma Groceries. The other demo accounts use synthetic data."
         )
-    
+
+    try:
+        return _ingest_razorpay(merchant_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Razorpay ingestion error: {str(e)}")
+
+
+@app.get("/razorpay/payments")
+def get_razorpay_payments(authorization: str = Header("")):
+    """Fetch recent payments from Razorpay test mode enriched with abuse ring status."""
+    merchant_id = _verify_token(authorization)
+
+    # 1ed1d417-6ce7-4b1d-ba96-1a08097b591a is Gamma Groceries
+    if merchant_id != "1ed1d417-6ce7-4b1d-ba96-1a08097b591a":
+        raise HTTPException(
+            status_code=403,
+            detail="Test mode payments sync is only enabled for Gamma Groceries. The other demo accounts use synthetic data."
+        )
+
     try:
         from ingestion.razorpay_client import fetch_recent_payments
         payments = fetch_recent_payments()
-        if not payments:
-            return {"status": "success", "added": 0, "message": "No new payments found"}
-            
-        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        accounts_file = os.path.join(base_dir, "data", "accounts.csv")
-        orders_file = os.path.join(base_dir, "data", "orders.csv")
-        
-        # We need to map Razorpay data to our synthetic schema
-        # Email -> account_id (hash of email to keep it unique per user)
-        # Card ID -> card_hash
-        # IP/Contact -> device_hash/address_hash
-        
-        new_accounts = []
-        new_orders = []
-        
+
+        # Check which account IDs belong to flagged clusters for Gamma
+        gamma_clusters = [c for c in _scored_clusters if c.get("merchant_id") == merchant_id]
+        flagged_acct_to_cluster = {}
+        for c in gamma_clusters:
+            if c.get("flagged_for_review"):
+                for aid in c.get("account_ids", []):
+                    flagged_acct_to_cluster[aid] = c.get("cluster_id")
+
+        enriched = []
         for p in payments:
-            # Generate deterministic hashes for the simulated signals based on Razorpay data
-            email = p.get("email") or "unknown@example.com"
-            contact = p.get("contact") or "0000000000"
-            card_id = p.get("card_id") or "card_unknown"
-            
-            # Simulated Account ID
-            acc_id = "acct_rzp_" + hashlib.md5(str(email).encode()).hexdigest()[:8]
-            
-            # Map Contact to Address Hash and Device Hash for the demo
-            # In a real app, Razorpay provides IP via webhooks or you collect it on frontend
-            device_hash = hashlib.md5(str(contact).encode()).hexdigest()[:16]
-            address_hash = hashlib.md5((str(contact) + "addr").encode()).hexdigest()[:16]
-            card_hash = hashlib.md5(str(card_id).encode()).hexdigest()[:16]
-            
-            new_accounts.append({
+            acc_id = f"acct_rzp_{p['payment_id'][-8:]}"
+            cluster_id = flagged_acct_to_cluster.get(acc_id)
+            enriched.append({
+                **p,
                 "account_id": acc_id,
-                "merchant_id": merchant_id,
-                "email": email,
-                "phone": contact,
-                "device_hash": device_hash,
-                "address_hash": address_hash,
-                "card_hash": card_hash,
-                "signup_time": p.get("created_at") or datetime.now().isoformat()
+                "is_flagged_ring": cluster_id is not None,
+                "cluster_id": cluster_id,
             })
-            
-            new_orders.append({
-                "order_id": p.get("payment_id"),
-                "account_id": acc_id,
-                "merchant_id": merchant_id,
-                "amount": p.get("amount"),
-                "promo_code_used": "",
-                "refund_requested": p.get("status") == "refunded",
-                "order_time": p.get("created_at") or datetime.now().isoformat()
-            })
-            
-        # Deduplicate new accounts (same email might have multiple payments)
-        df_new_accs = pd.DataFrame(new_accounts).drop_duplicates(subset=["account_id"])
-        df_new_ords = pd.DataFrame(new_orders).drop_duplicates(subset=["order_id"])
-        
-        # Append to CSVs
-        if os.path.exists(accounts_file):
-            df_accs = pd.read_csv(accounts_file)
-            # Only append accounts that don't already exist
-            existing = set(df_accs["account_id"])
-            df_new_accs = df_new_accs[~df_new_accs["account_id"].isin(existing)]
-            
-            if not df_new_accs.empty:
-                df_new_accs.to_csv(accounts_file, mode="a", header=False, index=False)
-                
-        if os.path.exists(orders_file):
-            df_ords = pd.read_csv(orders_file)
-            # Only append orders that don't already exist
-            existing = set(df_ords["order_id"])
-            df_new_ords = df_new_ords[~df_new_ords["order_id"].isin(existing)]
-            
-            if not df_new_ords.empty:
-                df_new_ords.to_csv(orders_file, mode="a", header=False, index=False)
-                
-        # Trigger detection refresh
-        if not df_new_ords.empty or not df_new_accs.empty:
-            _run_detection()
-            
+
         return {
-            "status": "success", 
-            "added_accounts": len(df_new_accs),
-            "added_orders": len(df_new_ords),
-            "total_clusters": len(_scored_clusters)
+            "status": "success",
+            "payments": enriched,
+            "total": len(enriched),
+            "flagged_count": sum(1 for item in enriched if item["is_flagged_ring"])
         }
-        
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Razorpay ingestion error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch Razorpay payments: {str(e)}")
 
 
 # ---------------------------------------------------------------------------

@@ -5,6 +5,7 @@
 import FloatingLines from '@/components/FloatingLines';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { AlertCircle, ShieldAlert, Activity, Users, Database, Zap, ChevronDown } from 'lucide-react';
 import SpotlightCard from '@/components/SpotlightCard';
 import PixelCard from '@/components/PixelCard';
@@ -55,6 +56,14 @@ export default function Home() {
       fetchClusters();
     }
   }, [isAuthenticated, merchantId]);
+
+  useEffect(() => {
+    const handleSyncEvent = () => {
+      fetchClusters();
+    };
+    window.addEventListener('sentinel-data-synced', handleSyncEvent);
+    return () => window.removeEventListener('sentinel-data-synced', handleSyncEvent);
+  }, [merchantId]);
 
   const handleManualRefresh = () => {
     setShouldAnimateSummary(true);
@@ -232,8 +241,26 @@ export default function Home() {
           Error: {error}
         </div>
       ) : clusters.length === 0 ? (
-        <div className="text-center py-20 text-white/60 bg-white/5 backdrop-blur-md border border-white/20 rounded-3xl shadow-xl">
-          No flagged clusters found for this merchant.
+        <div className="text-center py-16 px-6 text-white/60 bg-white/5 backdrop-blur-md border border-white/20 rounded-3xl shadow-xl flex flex-col items-center max-w-xl mx-auto">
+          <ShieldAlert className="w-10 h-10 text-white/30 mb-3" />
+          <p className="text-base text-white/90 font-medium">No flagged clusters found for this merchant.</p>
+          {merchantName === 'Gamma Groceries' ? (
+            <div className="mt-4 flex flex-col sm:flex-row items-center gap-3">
+              <button
+                onClick={handleManualRefresh}
+                className="px-4 py-2 bg-[#0D94FB] hover:bg-[#0b82dc] text-white rounded-xl text-xs font-semibold transition-all shadow-md flex items-center gap-2"
+              >
+                <Activity className="w-3.5 h-3.5" />
+                Refresh Detection
+              </button>
+              <Link
+                href="/payments"
+                className="px-4 py-2 bg-white/10 hover:bg-white/15 text-white rounded-xl text-xs font-semibold transition-all border border-white/10 flex items-center gap-1.5"
+              >
+                View Live Payments
+              </Link>
+            </div>
+          ) : null}
         </div>
       ) : (
         <div className="space-y-2">

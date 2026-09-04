@@ -31,11 +31,24 @@ def _timing_score(signup_times: pd.Series) -> float:
     3 days -> ~0.55
     7 days -> ~0.25
     30 days -> ~0.002
+    Also detects tight burst windows (e.g. >= 3 accounts created in rapid succession).
     """
     if len(signup_times) < 2:
         return 0.5
-    span_days = (signup_times.max() - signup_times.min()).total_seconds() / 86400.0
-    return math.exp(-span_days / 3.0)
+    sorted_times = pd.to_datetime(signup_times, format='mixed').sort_values()
+    full_span = (sorted_times.iloc[-1] - sorted_times.iloc[0]).total_seconds() / 86400.0
+
+    k = max(3, int(len(sorted_times) * 0.7))
+    if len(sorted_times) >= k:
+        min_subspan = min(
+            (sorted_times.iloc[i + k - 1] - sorted_times.iloc[i]).total_seconds() / 86400.0
+            for i in range(len(sorted_times) - k + 1)
+        )
+        effective_span = min(full_span, min_subspan * 1.5)
+    else:
+        effective_span = full_span
+
+    return math.exp(-effective_span / 3.0)
 
 
 def _behavior_score(orders_df: pd.DataFrame, account_ids: frozenset[str]) -> float:

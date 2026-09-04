@@ -4,11 +4,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { ShieldAlert, ScanLine, LogOut, ChevronDown, User, RefreshCcw } from 'lucide-react';
+import { ShieldAlert, ScanLine, LogOut, ChevronDown, User, RefreshCcw, CreditCard } from 'lucide-react';
 import { useAuth } from './AuthContext';
 
 const navItems = [
   { href: '/', label: 'Ring Detector', icon: ShieldAlert },
+  { href: '/payments', label: 'Live Payments', icon: CreditCard },
   { href: '/key-scanner', label: 'Key Scanner', icon: ScanLine },
 ];
 
