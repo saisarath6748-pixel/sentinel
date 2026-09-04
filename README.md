@@ -78,16 +78,9 @@ cp .env.example .env
 
 ### 3. Install Dependencies
 
-Install the required Python packages for the backend and detection pipelines:
+Install both the backend Python packages and the frontend Node.js dependencies using the setup script:
 ```bash
-pip install -r requirements.txt
-```
-
-Navigate to the dashboard directory and install frontend dependencies:
-```bash
-cd dashboard
-npm install
-cd ..
+npm run setup
 ```
 
 ### 4. Database Setup
@@ -114,17 +107,10 @@ python eval/evaluate.py
 
 ### 6. Run the Application
 
-Start the backend API and frontend dashboard (in separate terminal windows):
+Start both the backend API and frontend dashboard concurrently:
 
-**Backend:**
 ```bash
-python -m api.main
-```
-
-**Frontend:**
-```bash
-cd dashboard
-npm run dev
+npm start
 ```
 
 Visit `http://localhost:3000` to access the Sentinel Dashboard.
