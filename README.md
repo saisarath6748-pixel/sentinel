@@ -46,7 +46,7 @@ Accessible via the **Live Payments** tab (`/payments`), this module provides rea
 
 ## 🔑 How the API Key Leak Scanner Works
 
-Formulated with reference to Razorpay's **Major Security Risks** and **Common Problems** developer documentation, this standalone module addresses the widespread industry issue of merchants leaving private API keys in client-facing frontend assets or committing them to repositories:
+Formulated with reference to Razorpay's **Payouts Best Practices** developer documentation, this standalone module addresses the widespread industry issue of merchants leaving private API keys in client-facing frontend assets or committing them to repositories:
 
 1. **Frontend & Codebase Inspection**: Scans client-side JavaScript/TypeScript files, frontend build artifacts, and project directories to ensure private merchant API keys are never bundled into customer-facing applications.
 2. **Repository & Git History Auditing**: Analyzes working directories as well as historical git commits using regex signature matching and Shannon entropy to catch hardcoded Razorpay Live/Test credentials (`rzp_live_*`, `rzp_test_*`) and service tokens.
