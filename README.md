@@ -1,4 +1,4 @@
-# 🛡️ Abuse-Ring Sentinel
+#  Abuse-Ring Sentinel
 
 > **Razorpay Buildathon — Track 02: AI Risk Manager**
 
@@ -8,7 +8,7 @@ Built for precision and scale, Sentinel acts as an intelligent watchdog. It iden
 
 ---
 
-## 🚀 About Sentinel
+##  About Sentinel
 
 Built for the **Razorpay /buildathon 2026**, **Sentinel** is an enterprise AI risk management platform designed to secure digital merchants across three vital dimensions:
 
@@ -23,7 +23,7 @@ Security starts at the source. Taking direct reference from Razorpay's documente
 
 > **Important Note for the Buildathon:** The frontend dashboard provided in this repository serves as a visual control center demonstrating the capabilities of Sentinel. In production, the **Abuse Ring Detector**, **Live Ingestion Engine**, and **API Key Leak Scanner** are modular services engineered to integrate into existing merchant checkout pipelines, risk orchestration platforms, or CI/CD workflows.
 
-## 🕵️‍♂️ How it Detects Abuse Rings
+##  How it Detects Abuse Rings
 
 Sentinel's detection engine operates in three core phases:
 
@@ -31,7 +31,7 @@ Sentinel's detection engine operates in three core phases:
 2. **Deterministic Clustering**: Models these signals as an entity graph to deterministically cluster accounts that share a suspiciously high overlap of identifiable markers.
 3. **LLM-Powered Contextualization & Scoring**: Leverages Large Language Models to evaluate clustered network topologies, generating a risk score and an interpretable narrative of *why* the syndicate was flagged, giving fraud analysts instant context.
 
-## 💳 Live Payments & Real-Time Razorpay Ingestion
+##  Live Payments & Real-Time Razorpay Ingestion
 
 Accessible via the **Live Payments** tab (`/payments`), this module provides real-time visibility into incoming payments directly from the Razorpay API and correlates them with Sentinel's risk detection engine:
 
@@ -44,7 +44,7 @@ Accessible via the **Live Payments** tab (`/payments`), this module provides rea
    - **Instant Search**: Search transactions on the fly by Payment ID (`pay_*`), customer email address, or contact number.
    - **Status Tabs**: Filter between **All**, **Captured**, **Failed**, and **Abuse Rings** to rapidly triage payment anomalies.
 
-## 🔑 How the API Key Leak Scanner Works
+##  How the API Key Leak Scanner Works
 
 Formulated with reference to Razorpay's **Payouts Best Practices** developer documentation, this standalone module addresses the widespread industry issue of merchants leaving private API keys in client-facing frontend assets or committing them to repositories:
 
@@ -52,7 +52,7 @@ Formulated with reference to Razorpay's **Payouts Best Practices** developer doc
 2. **Repository & Git History Auditing**: Analyzes working directories as well as historical git commits using regex signature matching and Shannon entropy to catch hardcoded Razorpay Live/Test credentials (`rzp_live_*`, `rzp_test_*`) and service tokens.
 3. **Hygiene & Actionable Remediation**: Verifies `.gitignore` configurations against common secret patterns (e.g., `.env`, `.env.local`) and generates clear, actionable remediation guidance, including key rotation protocols and secure environment variable workflows.
 
-## 🏗️ Architecture
+##  Architecture
 
 Sentinel is built using a modern, decoupled architecture designed for rapid iteration and scalability:
 
@@ -82,17 +82,17 @@ sentinel/
 └── scripts/         # Utility scripts (test data generation, environment setup)
 ```
 
-## 🔐 Demo Accounts
+##  Demo Accounts
 
 To explore the dashboard, log in with any of the following pre-configured demo merchant accounts:
 
 **Password for all demo accounts:** `password123`
 
-- 🏢 `merchant_alpha@demo.sentinel`
-- 🏢 `merchant_beta@demo.sentinel`
-- 🏢 `merchant_gamma@demo.sentinel`
+-  `merchant_alpha@demo.sentinel`
+-  `merchant_beta@demo.sentinel`
+-  `merchant_gamma@demo.sentinel`
 
-## ⚡ Quick Setup
+##  Quick Setup
 
 Follow these steps to clone the repository, set up your environment, and spin up the Sentinel platform locally.
 
